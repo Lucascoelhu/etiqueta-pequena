@@ -1396,24 +1396,13 @@ function addTag() {
       layouts[id] = JSON.parse(JSON.stringify(DEFAULT_CONFIG.layouts[defKey]));
   }
 
-  // Posição: coloca após a última etiqueta existente (direita ou nova linha)
+  // Posição: sempre 2 colunas, próxima vai abaixo
   const W = tagW(), H = tagH(), GAP = 20;
-  const CANVAS_W = 2200;
-  if (tags.length <= 1) {
-    // primeira etiqueta
-    tagPos[id] = {x: 20, y: 20};
-  } else {
-    // encontra a última posição ocupada
-    const others = tags.filter(t=>t.id!==id);
-    const lastPos = others.map(t=>tagPos[t.id]||{x:20,y:20})
-                          .sort((a,b)=> a.y===b.y ? b.x-a.x : b.y-a.y)[0];
-    const nextX = lastPos.x + W + GAP;
-    if (nextX + W > CANVAS_W) {
-      tagPos[id] = {x: 20, y: lastPos.y + H + GAP};
-    } else {
-      tagPos[id] = {x: nextX, y: lastPos.y};
-    }
-  }
+  const COLS = 2;
+  const idx = tags.length - 1; // índice da nova tag (já foi adicionada)
+  const col = idx % COLS;
+  const row = Math.floor(idx / COLS);
+  tagPos[id] = {x: 20 + col * (W + GAP), y: 20 + row * (H + GAP)};
 
   selTagId=id; selElKey=null;
   refreshTagList(); renderAll();
@@ -1425,7 +1414,12 @@ function duplicateTag(srcId) {
   tags.push({...src, id, modelo: src.modelo||1});
   layouts[id] = JSON.parse(JSON.stringify(getLayout(srcId)));
   const p = getTagPos(srcId);
-  tagPos[id] = {x:p.x+tagW()+20, y:p.y};
+  // Posiciona na próxima célula do grid de 2 colunas
+  const _W = tagW(), _H = tagH(), _GAP = 20, _COLS = 2;
+  const _idx = tags.length - 1;
+  const _col = _idx % _COLS;
+  const _row = Math.floor(_idx / _COLS);
+  tagPos[id] = {x: 20 + _col * (_W + _GAP), y: 20 + _row * (_H + _GAP)};
   selTagId=id; selElKey=null;
   refreshTagList(); renderAll();
 }
@@ -1942,7 +1936,7 @@ const DEFAULT_CONFIG = {
       "und":      {"x":208,"y":80, "size":15,"bold":false,"italic":false,"color":"",       "visible":true}
     }
   },
-  "tagPos": {"1":{"x":20,"y":20},"2":{"x":333,"y":20},"3":{"x":20,"y":150}},
+  "tagPos": {"1":{"x":20,"y":20},"2":{"x":333,"y":20},"3":{"x":20,"y":133}},
   "nextId": 4
 };
 </script>
