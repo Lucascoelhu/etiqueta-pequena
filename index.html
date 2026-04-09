@@ -362,9 +362,6 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-/* ── ADMIN EMAIL (troque pelo seu) ── */
-const ADMIN_EMAILS = ['lukcoelhu@hotmail.com']; // adicione mais se quiser
-
 /* ── STATE ── */
 let currentMode  = null; // 'admin' | 'client'
 let currentLicId = null;
@@ -381,6 +378,16 @@ function showErr(id, msg) { document.getElementById(id).textContent = msg; }
 function clearMsg(errId, okId) {
   document.getElementById(errId).textContent = '';
   if (okId) document.getElementById(okId).textContent = '';
+}
+
+/* ── VERIFICA ADMIN NO FIRESTORE (sem expor email no código) ── */
+async function checkIsAdmin(uid) {
+  try {
+    const snap = await getDoc(doc(db, 'admins', uid));
+    return snap.exists();
+  } catch(e) {
+    return false;
+  }
 }
 
 /* ── TABS ── */
@@ -402,7 +409,8 @@ window.loginAdmin = async () => {
   setLoading('a-btn', true);
   try {
     const cred = await signInWithEmailAndPassword(auth, email, pass);
-    if (!ADMIN_EMAILS.includes(cred.user.email.toLowerCase())) {
+    const isAdmin = await checkIsAdmin(cred.user.uid);
+    if (!isAdmin) {
       await signOut(auth);
       showErr('a-err','❌ Conta sem permissão de admin.');
       setLoading('a-btn', false);
@@ -427,12 +435,18 @@ window.doAdminLogout = async () => {
 
 /* ── FIREBASE AUTH STATE ── */
 onAuthStateChanged(auth, async (user) => {
-  if (user && ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-    currentMode  = 'admin';
-    currentEmail = user.email;
-    enterApp('admin', user.email, null);
+  if (user) {
+    const isAdmin = await checkIsAdmin(user.uid);
+    if (isAdmin) {
+      currentMode  = 'admin';
+      currentEmail = user.email;
+      enterApp('admin', user.email, null);
+    } else {
+      // Usuário autenticado mas não é admin — faz logout silencioso
+      await signOut(auth);
+    }
   }
-  // se não for admin autenticado, não faz nada — cliente usa fluxo de token
+  // cliente usa fluxo de token separado
 });
 
 /* ── CLIENT TOKEN ACTIVATION ── */
