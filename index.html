@@ -1301,12 +1301,14 @@ function selectEl(tagId, key, shiftKey=false) {
   if (isMobile() && !shiftKey) openDrawer('elemento');
 }
 
+let _previewModelo = 1;
 function previewModelo(val) {
   // Remove canvas de preview anterior se existir (sem tocar no array tags)
   const oldPrev = document.getElementById('preview-canvas-wrap');
   if (oldPrev) oldPrev.remove();
 
-  const m = parseInt(val)||1;
+  _previewModelo = parseInt(val)||1;
+  const m = _previewModelo;
   const area = document.getElementById('canvas-inner');
   if (!area) return;
 
@@ -1358,10 +1360,12 @@ function previewModelo(val) {
 function addTag() {
   // Remove ghost de preview se existir
   const ghost = document.getElementById('preview-canvas-wrap');
+  const hadPreview = !!ghost;
   if (ghost) ghost.remove();
 
   const id = nextId++;
-  const modelo = parseInt(document.getElementById('new-tag-modelo')?.value||'1')||1;
+  // Usa modelo do preview se havia um, senão lê do select
+  const modelo = hadPreview ? _previewModelo : (parseInt(document.getElementById('new-tag-modelo')?.value||'1')||1);
   const defColors = {corFundo:'#ffffff', corBorda:'#afa1a1', corTexto:'#000000'};
   if (modelo===1) tags.push({id, modelo:1, nome:'PRODUTO', marca:'MARCA', precoInt:'0', centavos:',00', und:'CADA', ...defColors});
   else if (modelo===2) tags.push({id, modelo:2, nome2:'PRODUTO', marca2:'MARCA', qtd1:'1', precoInt2a:'0', centavos2a:',00', qtd3:'3', precoInt2b:'0', centavos2b:',00', ...defColors});
