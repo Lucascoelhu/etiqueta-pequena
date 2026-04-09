@@ -198,6 +198,52 @@ body{font-family:Arial,sans-serif;background:#e8e8e8;color:#222;font-size:14px;o
 .exp-icon{font-size:48px;margin-bottom:12px}
 .exp-title{font-size:20px;font-weight:800;color:#c0392b;margin-bottom:8px}
 .exp-sub{font-size:13px;color:#666;line-height:1.6}
+
+/* ===== WELCOME SCREEN ===== */
+#welcome-screen{
+  position:fixed;inset:0;z-index:900;
+  background:linear-gradient(135deg,#0055aa 0%,#0077cc 60%,#00aaff 100%);
+  display:none;align-items:center;justify-content:center;
+  font-family:'Segoe UI',Arial,sans-serif;
+}
+#welcome-screen.show{display:flex}
+.wlc-card{
+  background:#fff;border-radius:20px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+  padding:48px 44px;width:100%;max-width:440px;
+  text-align:center;position:relative;overflow:hidden;
+  animation:wlcPop .5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes wlcPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.wlc-card::before{
+  content:'';position:absolute;top:-60px;right:-60px;
+  width:180px;height:180px;border-radius:50%;
+  background:rgba(0,119,204,.07);
+}
+.wlc-icon{font-size:56px;margin-bottom:16px;display:block;animation:wlcBounce .6s .3s both}
+@keyframes wlcBounce{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.wlc-title{font-size:26px;font-weight:800;color:#111;margin-bottom:8px}
+.wlc-name{font-size:20px;font-weight:700;color:#0077cc;margin-bottom:6px}
+.wlc-email{font-size:13px;color:#888;font-family:monospace;margin-bottom:24px}
+.wlc-divider{width:48px;height:3px;background:#0077cc;border-radius:2px;margin:0 auto 20px}
+.wlc-info{font-size:13px;color:#555;line-height:1.7;margin-bottom:28px}
+.wlc-info strong{color:#111}
+.wlc-exp{
+  display:inline-block;
+  background:#f0f8ff;border:1px solid #cce4ff;
+  border-radius:8px;padding:8px 16px;
+  font-size:12px;color:#0055aa;font-weight:600;
+  margin-bottom:28px;
+}
+.wlc-btn{
+  width:100%;padding:14px;font-size:16px;font-weight:700;
+  background:#0077cc;color:#fff;border:none;border-radius:10px;
+  cursor:pointer;font-family:inherit;
+  transition:background .2s,transform .1s;
+  box-shadow:0 4px 16px rgba(0,119,204,.35);
+}
+.wlc-btn:hover{background:#005fa3}
+.wlc-btn:active{transform:scale(.98)}
 </style>
 </head>
 <body>
@@ -268,6 +314,25 @@ body{font-family:Arial,sans-serif;background:#e8e8e8;color:#222;font-size:14px;o
     <div class="exp-icon">⏳</div>
     <div class="exp-title">Licença expirada</div>
     <div class="exp-sub">Sua licença expirou. Entre em contato com o administrador para renovar o acesso.</div>
+  </div>
+</div>
+
+<!-- ===== WELCOME SCREEN ===== -->
+<div id="welcome-screen">
+  <div class="wlc-card">
+    <span class="wlc-icon">🏷️</span>
+    <div class="wlc-title">Bem-vindo ao</div>
+    <div style="font-size:22px;font-weight:800;color:#0077cc;margin-bottom:4px">Editor de Etiquetas</div>
+    <div class="wlc-divider"></div>
+    <div class="wlc-name" id="wlc-name">—</div>
+    <div class="wlc-email" id="wlc-email">—</div>
+    <div class="wlc-info">
+      Sua licença está <strong>ativa</strong>.<br>
+      Você pode criar, editar e imprimir suas etiquetas.<br>
+      Suas configurações são salvas automaticamente na nuvem.
+    </div>
+    <div class="wlc-exp" id="wlc-exp">📅 Licença válida até —</div>
+    <button class="wlc-btn" onclick="closeWelcome()">Acessar o editor →</button>
   </div>
 </div>
 
@@ -513,7 +578,7 @@ window.activateClient = async () => {
 
     document.getElementById('c-ok').textContent = '✔ Licença válida! Carregando…';
     setLoading('c-btn', false);
-    setTimeout(() => enterApp('client', email, licDoc.id), 600);
+    setTimeout(() => enterApp('client', email, licDoc.id, lic, false), 600);
 
   } catch(e) {
     console.error(e);
@@ -555,7 +620,7 @@ async function tryRestoreSession() {
     currentMode  = 'client';
     currentEmail = sess.email;
     currentLicId = sess.licId;
-    enterApp('client', sess.email, sess.licId);
+    enterApp('client', sess.email, sess.licId, null, true);
     return true;
   } catch(e) {
     return false;
@@ -563,23 +628,47 @@ async function tryRestoreSession() {
 }
 
 /* ── ENTER APP ── */
-async function enterApp(mode, email, licId) {
+async function enterApp(mode, email, licId, licData, skipWelcome) {
   document.getElementById('license-screen').style.display = 'none';
-  document.getElementById('app-root').style.display       = 'flex';
 
   if (mode === 'admin') {
+    document.getElementById('app-root').style.display = 'flex';
     document.getElementById('admin-bar').classList.add('show');
     document.getElementById('app-with-bar').classList.add('has-bar');
     document.getElementById('admin-bar-email').textContent = email;
-    // Admin carrega do localStorage (sem Firestore por cliente)
     initEditor(null);
   } else {
-    // Cliente: carrega/salva config no Firestore
-    initEditor(licId);
-    // Verifica expiração a cada 10 min
-    setInterval(() => checkExpiry(licId), 600000);
+    if (skipWelcome) {
+      // Sessão restaurada — entra direto
+      document.getElementById('app-root').style.display = 'flex';
+      initEditor(licId);
+      setInterval(() => checkExpiry(licId), 600000);
+    } else {
+      // Primeira ativação — mostra boas-vindas
+      showWelcome(email, licData, licId);
+    }
   }
 }
+
+function showWelcome(email, licData, licId) {
+  const name = licData?.name || email.split('@')[0];
+  const exp  = licData?.expiresAt?.toDate?.();
+  const expStr = exp ? exp.toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'}) : '—';
+
+  document.getElementById('wlc-name').textContent  = name;
+  document.getElementById('wlc-email').textContent = email;
+  document.getElementById('wlc-exp').textContent   = '📅 Licença válida até ' + expStr;
+  document.getElementById('welcome-screen').classList.add('show');
+
+  window._pendingLicId = licId;
+}
+
+window.closeWelcome = () => {
+  document.getElementById('welcome-screen').classList.remove('show');
+  document.getElementById('app-root').style.display = 'flex';
+  initEditor(window._pendingLicId);
+  setInterval(() => checkExpiry(window._pendingLicId), 600000);
+};
 
 async function checkExpiry(licId) {
   if (!licId) return;
@@ -689,14 +778,15 @@ const EL_NAMES = {
   // modelo 1 (preço simples)
   nome:'Nome', marca:'Marca', rs:'"R$"', precoInt:'Valor inteiro', centavos:'Centavos', und:'Unidade',
   // modelo 2 (qtd por preço)
-  qtd:'Qtd (ex: 3)', porLabel:'"por"', rs2:'"R$"', precoInt2:'Valor inteiro', centavos2:'Centavos',
+  nome2:'Nome', marca2:'Marca', qtd1:'Qtd linha 1 (ex: 1)', porLabel1:'"por"', rs2a:'"R$"', precoInt2a:'Valor inteiro', centavos2a:'Centavos',
+  ouLabel:'"ou"', qtd3:'Qtd linha 2 (ex: 3)', porLabel2:'"por"', rs2b:'"R$"', precoInt2b:'Valor inteiro 2', centavos2b:'Centavos 2',
   // modelo 3 (preço riscado)
   nome3:'Nome', marca3:'Marca', rsOld:'"R$" riscado', precoOld:'Valor riscado', centsOld:'Centavos riscado',
   rsNew:'"R$" novo', precoNew:'Valor novo', centsNew:'Centavos novo', undNew:'Unidade'
 };
 const FIELD_MAP = {
   nome:'nome', marca:'marca', precoInt:'precoInt', centavos:'centavos', und:'und',
-  qtd:'qtd', precoInt2:'precoInt2', centavos2:'centavos2',
+  nome2:'nome2', marca2:'marca2', qtd1:'qtd1', precoInt2a:'precoInt2a', centavos2a:'centavos2a', precoInt2b:'precoInt2b', centavos2b:'centavos2b',
   nome3:'nome3', marca3:'marca3', precoOld:'precoOld', centsOld:'centsOld',
   precoNew:'precoNew', centsNew:'centsNew', undNew:'undNew'
 };
@@ -733,11 +823,19 @@ function defaultLayout(modelo) {
   const h = tagH(), w = tagW();
   modelo = modelo || 1;
   if (modelo === 2) return {
-    qtd:       {x:8,   y:8,      size:52, bold:true,  italic:false, color:'', visible:true},
-    porLabel:  {x:8,   y:62,     size:22, bold:false, italic:false, color:'', visible:true},
-    rs2:       {x:8,   y:88,     size:22, bold:false, italic:false, color:'', visible:true},
-    precoInt2: {x:40,  y:60,     size:56, bold:true,  italic:false, color:'#cc0000', visible:true},
-    centavos2: {x:100, y:62,     size:44, bold:true,  italic:false, color:'#cc0000', visible:true},
+    nome2:      {x:8,   y:8,    size:16, bold:true,  italic:false, color:'',        visible:true},
+    marca2:     {x:8,   y:28,   size:14, bold:false, italic:false, color:'#cc0000', visible:true},
+    qtd1:       {x:8,   y:50,   size:14, bold:true,  italic:false, color:'',        visible:true},
+    porLabel1:  {x:28,  y:50,   size:14, bold:false, italic:false, color:'',        visible:true},
+    rs2a:       {x:55,  y:50,   size:14, bold:false, italic:false, color:'',        visible:true},
+    precoInt2a: {x:72,  y:42,   size:28, bold:true,  italic:false, color:'#cc0000', visible:true},
+    centavos2a: {x:106, y:44,   size:22, bold:true,  italic:false, color:'#cc0000', visible:true},
+    ouLabel:    {x:8,   y:80,   size:12, bold:false, italic:false, color:'#888',    visible:true},
+    qtd3:       {x:8,   y:96,   size:14, bold:true,  italic:false, color:'',        visible:true},
+    porLabel2:  {x:28,  y:96,   size:14, bold:false, italic:false, color:'',        visible:true},
+    rs2b:       {x:55,  y:96,   size:14, bold:false, italic:false, color:'',        visible:true},
+    precoInt2b: {x:72,  y:88,   size:28, bold:true,  italic:false, color:'#cc0000', visible:true},
+    centavos2b: {x:106, y:90,   size:22, bold:true,  italic:false, color:'#cc0000', visible:true},
   };
   if (modelo === 3) return {
     nome3:    {x:8,   y:8,      size:16, bold:true,  italic:false, color:'', visible:true},
@@ -783,7 +881,7 @@ function buildEtiquetasHTML() {
       <div id="tag-list-inner"></div>
       <div style="margin-top:6px">
         <div style="font-size:11px;color:#999;margin-bottom:4px">Modelo da nova etiqueta</div>
-        <select id="new-tag-modelo" style="width:100%;padding:5px 7px;font-size:12px;border:1px solid #ccc;border-radius:3px;margin-bottom:6px">
+        <select id="new-tag-modelo" style="width:100%;padding:5px 7px;font-size:12px;border:1px solid #ccc;border-radius:3px;margin-bottom:6px" onchange="previewModelo(this.value)">
           <option value="1">Modelo 1 — Preço simples (R$ 5,99 CADA)</option>
           <option value="2">Modelo 2 — Quantidade (3 por R$ 5,99)</option>
           <option value="3">Modelo 3 — Promoção (riscado → novo preço)</option>
@@ -912,12 +1010,31 @@ function buildTagListHTML() {
       <div class="tag-item-body" style="display:${selTagId===t.id?'flex':'none'}">
         <div style="font-size:10px;color:#aaa;margin-bottom:4px">📐 ${t.modelo===2?'Modelo 2 · Qtd por preço':t.modelo===3?'Modelo 3 · Preço riscado':'Modelo 1 · Preço simples'}</div>
         ${t.modelo===2?`
-        <input type="text" placeholder="Qtd (ex: 3 ou 1)" value="${esc(t.qtd||'')}" oninput="tags[${i}].qtd=this.value;renderAll()">
+        <input type="text" placeholder="Nome do produto" value="${esc(t.nome2||'')}" oninput="tags[${i}].nome2=this.value;renderAll();refreshTagList()">
+        <input type="text" placeholder="Marca" value="${esc(t.marca2||'')}" oninput="tags[${i}].marca2=this.value;renderAll()">
+        <div style="font-size:11px;color:#888;margin:4px 0 2px;font-weight:700">Linha 1</div>
+        <div class="preco-row">
+          <div><div style="font-size:11px;color:#999;margin-bottom:2px">Qtd (ex: 1)</div>
+          <input type="text" placeholder="1" value="${esc(t.qtd1||'')}" oninput="tags[${i}].qtd1=this.value;renderAll()"></div>
+          <div></div>
+        </div>
         <div class="preco-row">
           <div><div style="font-size:11px;color:#999;margin-bottom:2px">Valor (R$)</div>
-          <input type="text" placeholder="5" value="${esc(t.precoInt2||'')}" oninput="tags[${i}].precoInt2=this.value;renderAll()"></div>
+          <input type="text" placeholder="5" value="${esc(t.precoInt2a||'')}" oninput="tags[${i}].precoInt2a=this.value;renderAll()"></div>
           <div><div style="font-size:11px;color:#999;margin-bottom:2px">Centavos</div>
-          <input type="text" placeholder=",99" value="${esc(t.centavos2||'')}" oninput="tags[${i}].centavos2=this.value;renderAll()"></div>
+          <input type="text" placeholder=",99" value="${esc(t.centavos2a||'')}" oninput="tags[${i}].centavos2a=this.value;renderAll()"></div>
+        </div>
+        <div style="font-size:11px;color:#888;margin:4px 0 2px;font-weight:700">Linha 2 (ou...)</div>
+        <div class="preco-row">
+          <div><div style="font-size:11px;color:#999;margin-bottom:2px">Qtd (ex: 3)</div>
+          <input type="text" placeholder="3" value="${esc(t.qtd3||'')}" oninput="tags[${i}].qtd3=this.value;renderAll()"></div>
+          <div></div>
+        </div>
+        <div class="preco-row">
+          <div><div style="font-size:11px;color:#999;margin-bottom:2px">Valor (R$)</div>
+          <input type="text" placeholder="13" value="${esc(t.precoInt2b||'')}" oninput="tags[${i}].precoInt2b=this.value;renderAll()"></div>
+          <div><div style="font-size:11px;color:#999;margin-bottom:2px">Centavos</div>
+          <input type="text" placeholder=",99" value="${esc(t.centavos2b||'')}" oninput="tags[${i}].centavos2b=this.value;renderAll()"></div>
         </div>
         `:t.modelo===3?`
         <input type="text" placeholder="Nome" value="${esc(t.nome3||'')}" oninput="tags[${i}].nome3=this.value;renderAll();refreshTagList()">
@@ -1017,11 +1134,69 @@ function selectEl(tagId, key, shiftKey=false) {
   if (isMobile() && !shiftKey) openDrawer('elemento');
 }
 
+function previewModelo(val) {
+  // Remove canvas de preview anterior se existir (sem tocar no array tags)
+  const oldPrev = document.getElementById('preview-canvas-wrap');
+  if (oldPrev) oldPrev.remove();
+
+  const m = parseInt(val)||1;
+  const area = document.getElementById('canvas-inner');
+  if (!area) return;
+
+  // Calcula posição: ao lado da última etiqueta real
+  const lastPos = tags.length > 0
+    ? {x: 20 + tags.length * (tagW() + 20), y: 20}
+    : {x: 20, y: 20};
+
+  // Cria wrapper de preview visual (não vai para o array tags)
+  const wrap = document.createElement('div');
+  wrap.id = 'preview-canvas-wrap';
+  wrap.style.cssText = `position:absolute;left:${lastPos.x}px;top:${lastPos.y}px;opacity:.55;pointer-events:none`;
+
+  const label = document.createElement('div');
+  label.textContent = '← PRÉVIA';
+  label.style.cssText = 'font-size:10px;color:#0077cc;font-weight:700;text-align:center;margin-bottom:2px;font-family:Arial';
+
+  const borda = parseInt($v('borda'))||0;
+  const corB  = $v('cor-borda')||'#000000';
+  const corF  = $v('cor-fundo')||'#ffffff';
+  const canvas = document.createElement('div');
+  canvas.style.cssText = `width:${tagW()}px;height:${tagH()}px;border:${borda}px solid ${corB};background:${corF};position:relative;overflow:hidden`;
+
+  // Pega layout padrão do modelo
+  const lay = defaultLayout(m);
+  let elDefs;
+  if (m===2) elDefs = {nome2:'PRODUTO',marca2:'MARCA',qtd1:'1',porLabel1:'por',rs2a:'R$',precoInt2a:'5',centavos2a:',99',ouLabel:'ou',qtd3:'3',porLabel2:'por',rs2b:'R$',precoInt2b:'13',centavos2b:',99'};
+  else if (m===3) elDefs = {nome3:'PRODUTO',marca3:'MARCA',rsOld:'R$',precoOld:'9',centsOld:',99',rsNew:'R$',precoNew:'7',centsNew:',99',undNew:'CADA'};
+  else elDefs = {nome:'PRODUTO',marca:'MARCA',rs:'R$',precoInt:'5',centavos:',99',und:'CADA'};
+
+  const corT = $v('cor-texto')||'#000000';
+  Object.entries(elDefs).forEach(([key, text]) => {
+    const cfg = lay[key]; if (!cfg) return;
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;white-space:nowrap;line-height:1.1;user-select:none;
+      left:${cfg.x||0}px;top:${cfg.y||0}px;font-size:${cfg.size||16}px;
+      font-weight:${cfg.bold?'700':'400'};font-style:${cfg.italic?'italic':'normal'};
+      color:${cfg.color||corT};
+      text-decoration:${(m===3&&['precoOld','centsOld','rsOld'].includes(key))?'line-through':''}`;
+    el.textContent = text;
+    canvas.appendChild(el);
+  });
+
+  wrap.appendChild(label);
+  wrap.appendChild(canvas);
+  area.appendChild(wrap);
+}
+
 function addTag() {
+  // Remove ghost de preview se existir
+  const ghost = document.getElementById('preview-canvas-wrap');
+  if (ghost) ghost.remove();
+
   const id = nextId++;
   const modelo = parseInt(document.getElementById('new-tag-modelo')?.value||'1')||1;
   if (modelo===1) tags.push({id, modelo:1, nome:'PRODUTO', marca:'MARCA', precoInt:'0', centavos:',00', und:'CADA'});
-  else if (modelo===2) tags.push({id, modelo:2, qtd:'3', precoInt2:'0', centavos2:',00'});
+  else if (modelo===2) tags.push({id, modelo:2, nome2:'PRODUTO', marca2:'MARCA', qtd1:'1', precoInt2a:'0', centavos2a:',00', qtd3:'3', precoInt2b:'0', centavos2b:',00'});
   else if (modelo===3) tags.push({id, modelo:3, nome3:'PRODUTO', marca3:'MARCA', precoOld:'9', centsOld:',99', precoNew:'7', centsNew:',99', undNew:'CADA'});
   selTagId=id; selElKey=null;
   refreshTagList(); renderAll();
@@ -1042,6 +1217,14 @@ function removeTag(id) {
   tags=tags.filter(t=>t.id!==id);
   delete layouts[id]; delete tagPos[id];
   if(selTagId===id){selTagId=null;selElKey=null;}
+  // Se ficou vazio, restaura o modelo padrão (modelo 1)
+  if(tags.length===0){
+    const defTag = DEFAULT_CONFIG.tags[0];
+    const newId = nextId++;
+    tags = [{...defTag, id:newId}];
+    layouts[newId] = JSON.parse(JSON.stringify(DEFAULT_CONFIG.layouts['1']));
+    tagPos[newId]  = {x:20, y:20};
+  }
   refreshTagList(); renderAll(); renderSidebar();
 }
 
@@ -1097,11 +1280,19 @@ function renderAll() {
     const m = t.modelo||1;
     if (m===2) {
       elDefs = {
-        qtd:       t.qtd||'3',
-        porLabel:  'por',
-        rs2:       'R$',
-        precoInt2: t.precoInt2||'0',
-        centavos2: t.centavos2||',00',
+        nome2:      t.nome2||'PRODUTO',
+        marca2:     t.marca2||'MARCA',
+        qtd1:       t.qtd1||'1',
+        porLabel1:  'por',
+        rs2a:       'R$',
+        precoInt2a: t.precoInt2a||'0',
+        centavos2a: t.centavos2a||',00',
+        ouLabel:    'ou',
+        qtd3:       t.qtd3||'3',
+        porLabel2:  'por',
+        rs2b:       'R$',
+        precoInt2b: t.precoInt2b||'0',
+        centavos2b: t.centavos2b||',00',
       };
     } else if (m===3) {
       elDefs = {
@@ -1166,7 +1357,7 @@ function renderAll() {
 }
 
 function startInlineEdit(el, tagId, key) {
-  if (key==='rs'||key==='rs2'||key==='rsOld'||key==='rsNew'||key==='porLabel') return;
+  if (['rs','rs2a','rs2b','rsOld','rsNew','porLabel1','porLabel2','ouLabel'].includes(key)) return;
   const tagIdx = tags.findIndex(t=>t.id===tagId);
   const cfg    = getLayout(tagId)[key];
   const popup  = document.getElementById('inline-popup');
@@ -1440,13 +1631,52 @@ function ensureHiddenInputs(cfg){
 }
 
 const DEFAULT_CONFIG = {
-  "tagW": "8", "tagH": "4", "borda": "3",
+  "tagW": "8", "tagH": "3", "borda": "3",
   "corBorda": "#afa1a1", "corFundo": "#ffffff", "corTexto": "#000000",
-  "mgTop": "0.5", "mgRight": "0.5", "mgBottom": "0.5", "mgLeft": "0.5",
-  "tags": [{"id":1,"nome":"ACHOCOLATADO 1L","marca":"SHEFA","precoInt":"5","prefixo":"","centavos":",99","und":"CADA"}],
-  "layouts": {"1":{"nome":{"x":8,"y":12,"size":18,"bold":true,"italic":false,"color":"","visible":true},"marca":{"x":9,"y":36,"size":18,"bold":false,"italic":false,"color":"","visible":true},"rs":{"x":9,"y":88.22,"size":30,"bold":false,"italic":false,"color":"","visible":true},"precoInt":{"x":60,"y":60,"size":80,"bold":true,"italic":false,"color":"#ff0000","visible":true},"centavos":{"x":116,"y":62,"size":60,"bold":true,"italic":false,"color":"#ff0000","visible":true},"und":{"x":208,"y":100,"size":18,"bold":false,"italic":false,"color":"","visible":true}}},
-  "tagPos": {"1":{"x":20,"y":20}},
-  "nextId": 3
+  "mgTop": "1", "mgRight": "1", "mgBottom": "1", "mgLeft": "1",
+  "tags": [
+    {"id":1,"modelo":1,"nome":"NOME DO PRODUTO 200G","marca":"MARCA","precoInt":"5","centavos":",99","und":"CADA"},
+    {"id":2,"modelo":2,"nome2":"NOME DO PRODUTO 200G","marca2":"MARCA","qtd1":"1","precoInt2a":"5","centavos2a":",99","qtd3":"3","precoInt2b":"13","centavos2b":",99"},
+    {"id":3,"modelo":3,"nome3":"NOME DO PRODUTO 200G","marca3":"MARCA","precoOld":"8","centsOld":",99","precoNew":"7","centsNew":",99","undNew":"CADA"}
+  ],
+  "layouts": {
+    "1":{
+      "nome":     {"x":8,  "y":8,  "size":18,"bold":true, "italic":false,"color":"",       "visible":true},
+      "marca":    {"x":8,  "y":26, "size":16,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "rs":       {"x":8,  "y":64, "size":30,"bold":false,"italic":false,"color":"",       "visible":true},
+      "precoInt": {"x":72, "y":36, "size":70,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "centavos": {"x":120,"y":40, "size":55,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "und":      {"x":208,"y":80, "size":15,"bold":false,"italic":false,"color":"",       "visible":true}
+    },
+    "2":{
+      "nome2":      {"x":8,  "y":8,  "size":16,"bold":true, "italic":false,"color":"",       "visible":true},
+      "marca2":     {"x":8,  "y":26, "size":16,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "qtd1":       {"x":24, "y":40, "size":30,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "porLabel1":  {"x":64, "y":44, "size":14,"bold":true, "italic":true, "color":"",       "visible":true},
+      "rs2a":       {"x":112,"y":44, "size":14,"bold":false,"italic":false,"color":"",       "visible":true},
+      "precoInt2a": {"x":144,"y":32, "size":35,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "centavos2a": {"x":168,"y":36, "size":25,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "ouLabel":    {"x":64, "y":64, "size":17,"bold":false,"italic":false,"color":"#888",   "visible":true},
+      "qtd3":       {"x":24, "y":76, "size":30,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "porLabel2":  {"x":64, "y":84, "size":14,"bold":true, "italic":true, "color":"",       "visible":true},
+      "rs2b":       {"x":104,"y":84, "size":14,"bold":false,"italic":false,"color":"",       "visible":true},
+      "precoInt2b": {"x":128,"y":72, "size":35,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "centavos2b": {"x":168,"y":72, "size":25,"bold":true, "italic":false,"color":"#cc0000","visible":true}
+    },
+    "3":{
+      "nome3":    {"x":8,  "y":8,  "size":16,"bold":true, "italic":false,"color":"",       "visible":true},
+      "marca3":   {"x":8,  "y":28, "size":14,"bold":false,"italic":false,"color":"#cc0000","visible":true},
+      "rsOld":    {"x":8,  "y":56, "size":13,"bold":false,"italic":false,"color":"#888",   "visible":true},
+      "precoOld": {"x":28, "y":48, "size":26,"bold":false,"italic":false,"color":"#888",   "visible":true},
+      "centsOld": {"x":62, "y":50, "size":20,"bold":false,"italic":false,"color":"#888",   "visible":true},
+      "rsNew":    {"x":8,  "y":82, "size":14,"bold":false,"italic":false,"color":"",       "visible":true},
+      "precoNew": {"x":28, "y":60, "size":50,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "centsNew": {"x":86, "y":62, "size":38,"bold":true, "italic":false,"color":"#cc0000","visible":true},
+      "undNew":   {"x":155,"y":95, "size":14,"bold":false,"italic":false,"color":"",       "visible":true}
+    }
+  },
+  "tagPos": {"1":{"x":20,"y":20},"2":{"x":338,"y":20},"3":{"x":656,"y":20}},
+  "nextId": 4
 };
 </script>
 </body>
