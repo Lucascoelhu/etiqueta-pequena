@@ -161,48 +161,60 @@ body{font-family:Arial,sans-serif;background:#e8e8e8;color:#222;font-size:14px;o
    =========================== */
 #license-screen{
   position:fixed;inset:0;z-index:1000;
-  background:#f0f2f5;
+  background:linear-gradient(160deg,#e8f0fb 0%,#f0f2f5 100%);
   display:flex;align-items:center;justify-content:center;
   font-family:'Segoe UI',Arial,sans-serif;
+  padding:16px;
 }
 .lic-card{
-  background:#fff;border-radius:16px;
+  background:#fff;border-radius:20px;
   box-shadow:0 8px 40px rgba(0,0,0,.13);
-  padding:40px 36px;width:100%;max-width:420px;
+  padding:36px 32px;width:100%;max-width:420px;
   position:relative;
 }
-.lic-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
-.lic-logo-icon{width:40px;height:40px;background:#0077cc;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
-.lic-logo-name{font-size:18px;font-weight:800;color:#111}
+.lic-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.lic-logo-icon{width:44px;height:44px;background:#0077cc;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.lic-logo-name{font-size:18px;font-weight:800;color:#111;line-height:1.2}
 .lic-logo-sub{font-size:11px;color:#888;font-family:monospace}
 .lic-title{font-size:20px;font-weight:800;margin-bottom:4px;color:#111}
-.lic-sub{font-size:13px;color:#666;margin-bottom:24px}
-.lic-tabs{display:flex;gap:0;margin-bottom:20px;border:1px solid #ddd;border-radius:8px;overflow:hidden}
-.lic-tab{flex:1;padding:9px 0;text-align:center;font-size:13px;font-weight:700;cursor:pointer;background:#f8f8f8;color:#666;transition:all .15s;border:none;font-family:inherit}
+.lic-sub{font-size:13px;color:#666;margin-bottom:20px;line-height:1.5}
+.lic-tabs{display:flex;gap:0;margin-bottom:20px;border:1px solid #ddd;border-radius:10px;overflow:hidden}
+.lic-tab{flex:1;padding:11px 0;text-align:center;font-size:14px;font-weight:700;cursor:pointer;background:#f8f8f8;color:#666;transition:all .15s;border:none;font-family:inherit;min-height:44px}
 .lic-tab.active{background:#0077cc;color:#fff}
 .lic-panel{display:none}
 .lic-panel.active{display:block}
-.lic-field{margin-bottom:14px}
-.lic-field label{display:block;font-size:11px;font-weight:700;color:#666;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.lic-field{margin-bottom:16px}
+.lic-field label{display:block;font-size:11px;font-weight:700;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
 .lic-field input{
-  width:100%;padding:11px 13px;
-  border:1px solid #ccc;border-radius:8px;
-  font-size:14px;font-family:inherit;
+  width:100%;padding:14px 14px;
+  border:1.5px solid #ddd;border-radius:10px;
+  font-size:16px;font-family:inherit;
   outline:none;transition:border-color .2s,box-shadow .2s;
-  background:#fafafa;
+  background:#fafafa;-webkit-appearance:none;
+  box-sizing:border-box;
 }
 .lic-field input:focus{border-color:#0077cc;box-shadow:0 0 0 3px rgba(0,119,204,.12);background:#fff}
 .lic-btn{
-  width:100%;padding:13px;font-size:15px;font-weight:700;
-  background:#0077cc;color:#fff;border:none;border-radius:8px;
+  width:100%;padding:16px;font-size:16px;font-weight:700;
+  background:#0077cc;color:#fff;border:none;border-radius:10px;
   cursor:pointer;font-family:inherit;margin-top:4px;
-  transition:background .2s;
+  transition:background .2s;min-height:52px;
+  -webkit-appearance:none;
 }
 .lic-btn:hover{background:#005fa3}
+.lic-btn:active{background:#004d8a;transform:scale(.98)}
 .lic-btn:disabled{background:#aaa;cursor:not-allowed}
-.lic-err{color:#c0392b;font-size:12px;margin-top:10px;min-height:18px;text-align:center}
-.lic-ok{color:#119911;font-size:12px;margin-top:10px;min-height:18px;text-align:center;font-weight:700}
+.lic-err{color:#c0392b;font-size:13px;margin-top:12px;min-height:18px;text-align:center}
+.lic-ok{color:#119911;font-size:13px;margin-top:12px;min-height:18px;text-align:center;font-weight:700}
 .lic-spinner{text-align:center;padding:12px 0;color:#0077cc;font-size:13px}
+/* Mobile específico */
+@media(max-width:480px){
+  #license-screen{padding:12px;align-items:flex-start;padding-top:40px}
+  .lic-card{padding:28px 20px;border-radius:16px}
+  .lic-logo{margin-bottom:20px}
+  .lic-title{font-size:18px}
+  .lic-sub{font-size:13px;margin-bottom:16px}
+}
 
 /* ===== ADMIN ONLY ELEMENTS ===== */
 .admin-only { display: none !important; }
@@ -246,12 +258,13 @@ body.is-admin button.admin-only { display: flex !important; }
   background:linear-gradient(135deg,#0055aa 0%,#0077cc 60%,#00aaff 100%);
   display:none;align-items:center;justify-content:center;
   font-family:'Segoe UI',Arial,sans-serif;
+  padding:16px;
 }
 #welcome-screen.show{display:flex}
 .wlc-card{
   background:#fff;border-radius:20px;
   box-shadow:0 20px 60px rgba(0,0,0,.25);
-  padding:48px 44px;width:100%;max-width:440px;
+  padding:40px 32px;width:100%;max-width:440px;
   text-align:center;position:relative;overflow:hidden;
   animation:wlcPop .5s cubic-bezier(.34,1.56,.64,1);
 }
@@ -277,11 +290,12 @@ body.is-admin button.admin-only { display: flex !important; }
   margin-bottom:28px;
 }
 .wlc-btn{
-  width:100%;padding:14px;font-size:16px;font-weight:700;
+  width:100%;padding:16px;font-size:16px;font-weight:700;
   background:#0077cc;color:#fff;border:none;border-radius:10px;
   cursor:pointer;font-family:inherit;
   transition:background .2s,transform .1s;
   box-shadow:0 4px 16px rgba(0,119,204,.35);
+  min-height:52px;-webkit-appearance:none;
 }
 .wlc-btn:hover{background:#005fa3}
 .wlc-btn:active{transform:scale(.98)}
@@ -324,7 +338,7 @@ body.is-admin button.admin-only { display: flex !important; }
       </div>
       <div class="lic-field">
         <label>Token de ativação</label>
-        <input type="text" id="c-token" placeholder="ETQ-XXXX-XXXX-XXXX" autocomplete="off" style="font-family:monospace;font-size:13px">
+        <input type="text" id="c-token" placeholder="ETQ-XXXX-XXXX-XXXX" autocomplete="off" style="font-family:monospace;font-size:16px;text-transform:uppercase;letter-spacing:1px" oninput="this.value=this.value.toUpperCase()">
       </div>
       <button class="lic-btn" id="c-btn" onclick="activateClient()">Ativar →</button>
       <div class="lic-err" id="c-err"></div>
