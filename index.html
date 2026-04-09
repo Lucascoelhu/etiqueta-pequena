@@ -155,10 +155,16 @@ body{font-family:Arial,sans-serif;background:#e8e8e8;color:#222;font-size:14px;o
   .et-canvas-wrap{position:relative}
   .et-wrapper.sel .et-canvas{outline:none!important;border-color:inherit!important}
   .et-el{cursor:default;outline:none!important;text-decoration:inherit}
-  .et-canvas{
+  .et-canvas, .et-canvas *{
     -webkit-print-color-adjust:exact!important;
     print-color-adjust:exact!important;
     color-adjust:exact!important;
+  }
+  /* Garante que a borda usa a cor configurada, não a de seleção */
+  .et-canvas{
+    border-color:inherit!important;
+    outline:none!important;
+    box-shadow:none!important;
   }
   @page{margin:1cm;size:A4}
 }
@@ -420,7 +426,7 @@ body.is-admin button.admin-only { display: flex !important; }
     <div class="save-msg" id="save-msg-desktop"></div>
     <!-- Salvar removido: config salva automaticamente no Firestore -->
     <button class="btn-export admin-only" onclick="exportConfig()">📋 Exportar config</button>
-    <button class="btn-print"  onclick="window.print()">🖨️ Imprimir</button>
+    <button class="btn-print"  onclick="doPrint()">🖨️ Imprimir</button>
   </div>
 </div>
 
@@ -435,7 +441,7 @@ body.is-admin button.admin-only { display: flex !important; }
   <button class="mob-btn" id="mob-btn-el" onclick="openDrawer('elemento')"><span class="icon">✏️</span>Elemento</button>
   <button class="mob-btn" onclick="openDrawer('config')"><span class="icon">⚙️</span>Config</button>
 
-  <button class="mob-btn" onclick="window.print()"><span class="icon">🖨️</span>Imprimir</button>
+  <button class="mob-btn" onclick="doPrint()"><span class="icon">🖨️</span>Imprimir</button>
 </div>
 
 <!-- DRAWER (mobile) -->
@@ -1407,7 +1413,7 @@ function renderAll() {
     wrapper.style.left=pos.x+'px'; wrapper.style.top=pos.y+'px';
 
     const canvas=wrapper.querySelector('.et-canvas-wrap .et-canvas')||wrapper.querySelector('.et-canvas');
-    canvas.style.cssText=`width:${w}px;height:${h}px;border:${borda}px solid ${corB};background:${corF};position:relative;overflow:hidden`;
+    canvas.style.cssText=`width:${w}px;height:${h}px;border:${borda}px solid ${corB};background:${corF};background-color:${corF};position:relative;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact`;
 
     const lay=getLayout(t.id);
     // elDefs por modelo
@@ -1554,6 +1560,16 @@ function openMobileTextEdit() {
   if (!el) return;
   closeDrawer();
   setTimeout(() => startInlineEdit(el, selTagId, selElKey), 320);
+}
+
+function doPrint() {
+  // Fecha drawer se aberto
+  closeDrawer();
+  // Desseleciona etiqueta e elemento
+  selTagId = null; selElKey = null; msClear();
+  renderAll();
+  // Pequeno delay para o render aplicar antes de imprimir
+  setTimeout(() => window.print(), 80);
 }
 
 function commitInlineEdit(){ inlineCommit&&inlineCommit(); }
