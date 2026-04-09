@@ -1120,20 +1120,20 @@ function buildTagListHTML() {
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #eee">
           <div class="campo"><label>Fundo</label>
             <input type="color" value="${t.corFundo||'#ffffff'}"
-              oninput="tags[${i}].corFundo=this.value;renderAll()"
-              onchange="tags[${i}].corFundo=this.value;renderAll()"
+              oninput="setTagColor(${t.id},'corFundo',this.value)"
+              onchange="setTagColor(${t.id},'corFundo',this.value)"
               style="width:100%;height:32px;padding:1px 2px;cursor:pointer;border:1px solid #ccc;border-radius:3px">
           </div>
           <div class="campo"><label>Borda</label>
             <input type="color" value="${t.corBorda||'#afa1a1'}"
-              oninput="tags[${i}].corBorda=this.value;renderAll()"
-              onchange="tags[${i}].corBorda=this.value;renderAll()"
+              oninput="setTagColor(${t.id},'corBorda',this.value)"
+              onchange="setTagColor(${t.id},'corBorda',this.value)"
               style="width:100%;height:32px;padding:1px 2px;cursor:pointer;border:1px solid #ccc;border-radius:3px">
           </div>
           <div class="campo"><label>Texto</label>
             <input type="color" value="${t.corTexto||'#000000'}"
-              oninput="tags[${i}].corTexto=this.value;renderAll()"
-              onchange="tags[${i}].corTexto=this.value;renderAll()"
+              oninput="setTagColor(${t.id},'corTexto',this.value)"
+              onchange="setTagColor(${t.id},'corTexto',this.value)"
               style="width:100%;height:32px;padding:1px 2px;cursor:pointer;border:1px solid #ccc;border-radius:3px">
           </div>
         </div>
@@ -1196,6 +1196,11 @@ function buildTagListHTML() {
       </div>
     </div>
   `).join('');
+}
+
+function setTagColor(id, prop, val) {
+  const t = tags.find(t=>t.id===id);
+  if (t) { t[prop] = val; renderAll(); }
 }
 
 function esc(s){ return (s||'').replace(/"/g,'&quot;'); }
@@ -1394,9 +1399,9 @@ function renderAll() {
     const pos=getTagPos(t.id);
     // Cores por etiqueta (fallback para global)
     const borda = parseInt(t.borda!=null ? t.borda : bordaGlobal)||0;
-    const corB  = t.corBorda || corBGlobal;
-    const corF  = t.corFundo || corFGlobal;
-    const corT  = t.corTexto || corTGlobal;
+    const corB  = t.corBorda != null && t.corBorda !== '' ? t.corBorda : '#afa1a1';
+    const corF  = t.corFundo != null && t.corFundo !== '' ? t.corFundo : '#ffffff';
+    const corT  = t.corTexto != null && t.corTexto !== '' ? t.corTexto : '#000000';
 
     let wrapper=existing[tid];
     if(!wrapper){
