@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin · Licenças Etiquetas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e14;
+    --surface: #131720;
+    --surface2: #1a2030;
+    --border: #232c3d;
+    --border2: #2e3a52;
+    --accent: #3b82f6;
+    --accent2: #1d4ed8;
+    --accent-glow: rgba(59,130,246,.18);
+    --green: #22c55e;
+    --green-bg: rgba(34,197,94,.1);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,.1);
+    --yellow: #f59e0b;
+    --yellow-bg: rgba(245,158,11,.1);
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #4b5e7a;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Outfit', sans-serif;
+    --radius: 10px;
+    --shadow: 0 4px 24px rgba(0,0,0,.4);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── GRID NOISE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+  }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    position: relative;
+    z-index: 1;
+  }
+  .auth-logo {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 32px;
+  }
+  .auth-logo-icon {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .auth-logo-text { font-size: 18px; font-weight: 700; color: var(--text); }
+  .auth-logo-sub { font-size: 11px; color: var(--text2); font-family: var(--mono); }
+  .auth-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .auth-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .field input {
+    width: 100%; padding: 12px 14px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--text);
+    font-family: var(--sans); font-size: 14px;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .btn-primary {
+    width: 100%; padding: 13px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-family: var(--sans); font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background .2s, transform .1s;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-primary:active { transform: scale(.98); }
+  .auth-err { color: var(--red); font-size: 12px; margin-top: 10px; text-align: center; min-height: 18px; }
+
+  /* ── MAIN LAYOUT ── */
+  #main { display: none; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: 58px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-logo { display: flex; align-items: center; gap: 10px; }
+  .topbar-logo-icon {
+    width: 32px; height: 32px; background: var(--accent);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .topbar-logo-name { font-size: 16px; font-weight: 700; }
+  .topbar-logo-badge {
+    font-family: var(--mono); font-size: 10px; color: var(--text2);
+    background: var(--surface2); border: 1px solid var(--border2);
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-user { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+  .btn-logout {
+    padding: 6px 14px; font-size: 12px; font-weight: 600;
+    background: transparent; border: 1px solid var(--border2); border-radius: 6px;
+    color: var(--text2); cursor: pointer; font-family: var(--sans);
+    transition: all .2s;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── CONTENT ── */
+  .content { padding: 32px 28px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── STATS ── */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+  }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 800; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.yellow { color: var(--yellow); }
+  .stat-value.blue { color: var(--accent); }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px; gap: 12px; flex-wrap: wrap;
+  }
+  .toolbar-title { font-size: 18px; font-weight: 700; }
+  .toolbar-right { display: flex; gap: 10px; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 0 12px; height: 38px;
+  }
+  .search-box input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-family: var(--sans); font-size: 13px;
+    width: 200px;
+  }
+  .search-box input::placeholder { color: var(--text3); }
+  .btn-new {
+    display: flex; align-items: center; gap: 7px;
+    padding: 0 16px; height: 38px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+    white-space: nowrap;
+  }
+  .btn-new:hover { background: var(--accent2); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--surface2);
+    padding: 11px 16px;
+    text-align: left; font-size: 11px; font-weight: 700;
+    color: var(--text3); text-transform: uppercase; letter-spacing: .6px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(59,130,246,.04); }
+  td { padding: 14px 16px; font-size: 13px; vertical-align: middle; }
+  .td-name { font-weight: 600; color: var(--text); }
+  .td-email { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .td-token {
+    font-family: var(--mono); font-size: 11px; color: var(--text3);
+    max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .td-token:hover { color: var(--accent); }
+  .td-date { font-family: var(--mono); font-size: 12px; }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+  .badge.active { background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,197,94,.2); }
+  .badge.active::before { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+  .badge.expired { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,.2); }
+  .badge.expired::before { background: var(--red); }
+  .badge.expiring { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(245,158,11,.2); }
+  .badge.expiring::before { background: var(--yellow); }
+  .badge.inactive { background: var(--surface2); color: var(--text3); border: 1px solid var(--border); }
+  .badge.inactive::before { background: var(--text3); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .4; }
+  }
+
+  /* ── ACTION BUTTONS ── */
+  .actions { display: flex; gap: 6px; align-items: center; }
+  .act-btn {
+    padding: 5px 10px; font-size: 11px; font-weight: 600;
+    border-radius: 6px; cursor: pointer; border: 1px solid;
+    font-family: var(--sans); transition: all .15s; white-space: nowrap;
+  }
+  .act-btn.renew { background: var(--green-bg); color: var(--green); border-color: rgba(34,197,94,.3); }
+  .act-btn.renew:hover { background: rgba(34,197,94,.2); }
+  .act-btn.revoke { background: var(--red-bg); color: var(--red); border-color: rgba(239,68,68,.3); }
+  .act-btn.revoke:hover { background: rgba(239,68,68,.2); }
+  .act-btn.edit { background: var(--surface2); color: var(--text2); border-color: var(--border2); }
+  .act-btn.edit:hover { border-color: var(--accent); color: var(--accent); }
+  .act-btn.copy { background: var(--surface2); color: var(--text2); border-color: var(--border2); }
+  .act-btn.copy:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-bg.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 16px; padding: 32px; width: 100%; max-width: 480px;
+    box-shadow: var(--shadow);
+    transform: scale(.96); transition: transform .2s;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-bg.open .modal { transform: scale(1); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 22px; color: var(--text3); cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .modal-field { margin-bottom: 16px; }
+  .modal-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .modal-field input, .modal-field select {
+    width: 100%; padding: 11px 13px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--text);
+    font-family: var(--sans); font-size: 14px; outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    -webkit-appearance: none;
+  }
+  .modal-field select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234b5e7a' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .modal-field input:focus, .modal-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  .modal-field input:disabled { opacity: .5; cursor: not-allowed; }
+
+  .token-preview {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    font-family: var(--mono); font-size: 12px; color: var(--text2);
+    word-break: break-all; line-height: 1.8;
+    margin-top: 6px;
+  }
+  .token-info {
+    background: var(--accent-glow); border: 1px solid rgba(59,130,246,.2);
+    border-radius: var(--radius); padding: 12px 14px;
+    font-size: 12px; color: var(--text2); line-height: 1.7;
+    margin-bottom: 16px;
+  }
+  .token-info strong { color: var(--accent); }
+  .modal-footer { display: flex; gap: 10px; margin-top: 24px; }
+  .btn-modal-cancel {
+    flex: 1; padding: 12px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius); color: var(--text2);
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-modal-cancel:hover { border-color: var(--text2); color: var(--text); }
+  .btn-modal-ok {
+    flex: 2; padding: 12px;
+    background: var(--accent); border: none;
+    border-radius: var(--radius); color: #fff;
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background .2s;
+  }
+  .btn-modal-ok:hover { background: var(--accent2); }
+  .btn-modal-ok.danger { background: var(--red); }
+  .btn-modal-ok.danger:hover { background: #b91c1c; }
+  .btn-modal-ok.success { background: #16a34a; }
+  .btn-modal-ok.success:hover { background: #15803d; }
+
+  /* ── TOAST ── */
+  #toast-container { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 12px 16px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow); min-width: 240px;
+    display: flex; align-items: center; gap: 10px;
+    animation: slideIn .25s ease;
+    border-left: 3px solid var(--accent);
+  }
+  .toast.success { border-left-color: var(--green); }
+  .toast.error { border-left-color: var(--red); }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ── EMPTY ── */
+  .empty-state {
+    padding: 64px 32px; text-align: center; color: var(--text3);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: .4; }
+  .empty-text { font-size: 15px; font-weight: 500; }
+
+  /* ── RENEW MODAL ── */
+  .period-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+  .period-btn {
+    padding: 14px 10px; text-align: center; cursor: pointer;
+    border: 2px solid var(--border2); border-radius: var(--radius);
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    background: var(--surface2); color: var(--text2);
+    transition: all .15s;
+  }
+  .period-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .period-btn.sel { border-color: var(--accent); background: var(--accent-glow); color: var(--accent); }
+  .period-btn .days { font-size: 22px; font-weight: 800; color: var(--text); display: block; }
+  .period-btn.sel .days { color: var(--accent); }
+
+  /* ── LOADING ── */
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border2);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin .7s linear infinite; margin: 48px auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media(max-width: 600px) {
+    .content { padding: 16px 14px; }
+    .topbar { padding: 0 14px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .search-box input { width: 120px; }
+    .toolbar { flex-direction: column; align-items: flex-start; }
+    .toolbar-right { width: 100%; justify-content: space-between; }
+    td, th { padding: 10px 10px; }
+    .td-token, .td-date { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🏷️</div>
+      <div>
+        <div class="auth-logo-text">COELHO · Etiquetas</div>
+        <div class="auth-logo-sub">SISTEMA DE LICENÇAS</div>
+      </div>
+    </div>
+    <div class="auth-title">Acesso restrito</div>
+    <div class="auth-sub">Faça login com sua conta de administrador.</div>
+    <div class="field">
+      <label>E-mail</label>
+      <input type="email" id="auth-email" placeholder="admin@exemplo.com" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Entrar →</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="topbar-logo-icon">🏷️</div>
+      <div class="topbar-logo-name">COELHO</div>
+      <div class="topbar-logo-badge">ADMIN · LICENÇAS</div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-user" id="topbar-user">—</div>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card"><div class="stat-label">Total clientes</div><div class="stat-value blue" id="st-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Ativas</div><div class="stat-value green" id="st-active">—</div></div>
+      <div class="stat-card"><div class="stat-label">A vencer (7d)</div><div class="stat-value yellow" id="st-expiring">—</div></div>
+      <div class="stat-card"><div class="stat-label">Expiradas</div><div class="stat-value red" id="st-expired">—</div></div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="toolbar-title">Clientes cadastrados</div>
+      <div class="toolbar-right">
+        <div class="search-box">
+          <span style="color:var(--text3)">🔍</span>
+          <input type="text" id="search-input" placeholder="Buscar cliente ou email..." oninput="renderTable()">
+        </div>
+        <button class="btn-new" onclick="openNewModal()">+ Novo cliente</button>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>E-mail</th>
+            <th>Token</th>
+            <th>Status</th>
+            <th>Expira em</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="clients-tbody">
+          <tr><td colspan="6"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- MODAL: NOVO CLIENTE -->
+<div class="modal-bg" id="modal-new">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">➕ Cadastrar cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-new')">×</button>
+    </div>
+    <div class="token-info">
+      <strong>Como funciona:</strong> Um token único e seguro será gerado e vinculado ao e-mail informado.<br>
+      O cliente recebe o token, ativa com o próprio e-mail — qualquer tentativa de uso com outro e-mail será bloqueada.
+    </div>
+    <div class="modal-field">
+      <label>Nome do cliente / Empresa</label>
+      <input type="text" id="new-name" placeholder="Ex: Mercado Central">
+    </div>
+    <div class="modal-field">
+      <label>E-mail (usado para autenticação)</label>
+      <input type="email" id="new-email" placeholder="cliente@email.com">
+    </div>
+    <div class="modal-field">
+      <label>Período da licença</label>
+      <select id="new-period">
+        <option value="30">30 dias</option>
+        <option value="60">60 dias</option>
+        <option value="90" selected>90 dias</option>
+        <option value="custom">Definir manualmente</option>
+      </select>
+    </div>
+    <div class="modal-field" id="new-custom-wrap" style="display:none">
+      <label>Data de expiração</label>
+      <input type="date" id="new-custom-date">
+    </div>
+    <div class="modal-field">
+      <label>Token gerado automaticamente</label>
+      <div class="token-preview" id="new-token-preview">—</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-new')">Cancelar</button>
+      <button class="btn-modal-ok" onclick="createClient()">Cadastrar e copiar token →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: RENOVAR -->
+<div class="modal-bg" id="modal-renew">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔄 Renovar licença</div>
+      <button class="modal-close" onclick="closeModal('modal-renew')">×</button>
+    </div>
+    <div class="modal-field">
+      <label>Cliente</label>
+      <input type="text" id="renew-name" disabled>
+    </div>
+    <div class="modal-field">
+      <label>Escolha o novo período</label>
+      <div class="period-grid">
+        <div class="period-btn" onclick="selPeriod(30, this)"><span class="days">30</span>dias</div>
+        <div class="period-btn sel" onclick="selPeriod(60, this)"><span class="days">60</span>dias</div>
+        <div class="period-btn" onclick="selPeriod(90, this)"><span class="days">90</span>dias</div>
+      </div>
+      <div class="period-btn" id="period-manual-btn" onclick="toggleManualDate()" style="text-align:center;display:block">
+        📅 Definir data manualmente
+      </div>
+    </div>
+    <div class="modal-field" id="renew-manual-wrap" style="display:none">
+      <label>Data de expiração</label>
+      <input type="date" id="renew-custom-date">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-renew')">Cancelar</button>
+      <button class="btn-modal-ok success" onclick="confirmRenew()">✔ Confirmar renovação</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REVOGAR -->
+<div class="modal-bg" id="modal-revoke">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⛔ Revogar licença</div>
+      <button class="modal-close" onclick="closeModal('modal-revoke')">×</button>
+    </div>
+    <p style="color:var(--text2);font-size:14px;margin-bottom:20px">
+      Tem certeza que deseja revogar o acesso de <strong id="revoke-name" style="color:var(--text)"></strong>?<br>
+      O token atual será invalidado imediatamente.
+    </p>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-revoke')">Cancelar</button>
+      <button class="btn-modal-ok danger" onclick="confirmRevoke()">Revogar acesso</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: COPIAR TOKEN -->
+<div class="modal-bg" id="modal-token">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔑 Token do cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-token')">×</button>
+    </div>
+    <div class="modal-field">
+      <label>Token de ativação</label>
+      <div class="token-preview" id="view-token-val" style="font-size:13px;letter-spacing:.5px"></div>
+    </div>
+    <div style="color:var(--text2);font-size:12px;line-height:1.7;margin-bottom:4px">
+      Envie este token para <strong id="view-token-email" style="color:var(--text)"></strong>.<br>
+      O cliente deve ativar usando <strong>exatamente o mesmo e-mail</strong> cadastrado.
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-token')">Fechar</button>
+      <button class="btn-modal-ok" onclick="copyViewToken()">📋 Copiar token</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import {
+  getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, query, orderBy
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDQpMe7LE3qu0DZtYexSdL2zFLmnVu4tno",
+  authDomain: "etiquetas-pequenas.firebaseapp.com",
+  projectId: "etiquetas-pequenas",
+  storageBucket: "etiquetas-pequenas.firebasestorage.app",
+  messagingSenderId: "486896114261",
+  appId: "1:486896114261:web:f21f826587d4ad14a692dc"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* ─── TOKEN GENERATOR ─── */
+function generateToken(email) {
+  const emailHash = btoa(unescape(encodeURIComponent(email))).replace(/[+=\/]/g,'');
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(24)))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
+  const ts = Date.now().toString(36).toUpperCase();
+  return `ETQ-${ts}-${rand.substring(0,16).toUpperCase()}-${emailHash.substring(0,8).toUpperCase()}`;
+}
+
+/* ─── STATE ─── */
+window._clients = [];
+window._renewTarget = null;
+window._revokeTarget = null;
+window._viewTokenTarget = null;
+window._renewPeriod = 60;
+window._db = db;
+
+/* ─── AUTH ─── */
+window.doLogin = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass  = document.getElementById('auth-pass').value;
+  const err   = document.getElementById('auth-err');
+  err.textContent = '';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    err.textContent = '❌ E-mail ou senha incorretos.';
+  }
+};
+window.doLogout = () => signOut(auth);
+
+document.getElementById('auth-pass').addEventListener('keydown', e => { if(e.key==='Enter') window.doLogin(); });
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    document.getElementById('topbar-user').textContent = user.email;
+    loadClients();
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('main').style.display = 'none';
+  }
+});
+
+/* ─── LOAD CLIENTS ─── */
+async function loadClients() {
+  try {
+    const q = query(collection(db, 'licencas'), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    window._clients = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTable();
+    updateStats();
+  } catch(e) {
+    console.error(e);
+    toast('Erro ao carregar clientes', 'error');
+  }
+}
+
+/* ─── STATS ─── */
+function updateStats() {
+  const now = Date.now();
+  const in7  = now + 7*86400000;
+  let active=0, expiring=0, expired=0;
+  window._clients.forEach(c => {
+    if (!c.active) return;
+    const exp = c.expiresAt?.toDate?.()?.getTime() || 0;
+    if (exp < now)       expired++;
+    else if (exp < in7)  expiring++;
+    else                 active++;
+  });
+  // inactive/revoked treated as expired for display
+  window._clients.forEach(c => { if(!c.active) expired++; });
+
+  document.getElementById('st-total').textContent    = window._clients.length;
+  document.getElementById('st-active').textContent   = active;
+  document.getElementById('st-expiring').textContent = expiring;
+  document.getElementById('st-expired').textContent  = expired;
+}
+
+/* ─── RENDER TABLE ─── */
+window.renderTable = () => {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const list = window._clients.filter(c =>
+    !q || c.name?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q)
+  );
+  const now = Date.now();
+  const tbody = document.getElementById('clients-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Nenhum cliente encontrado</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(c => {
+    const exp = c.expiresAt?.toDate?.()?.getTime() || 0;
+    const expDate = exp ? new Date(exp).toLocaleDateString('pt-BR') : '—';
+    let badge, status;
+    if (!c.active) {
+      badge = `<span class="badge inactive">Inativo</span>`;
+    } else if (exp < now) {
+      badge = `<span class="badge expired">Expirado</span>`;
+    } else if (exp < now + 7*86400000) {
+      badge = `<span class="badge expiring">Vencendo</span>`;
+    } else {
+      badge = `<span class="badge active">Ativo</span>`;
+    }
+    const shortToken = c.token ? c.token.substring(0,22)+'…' : '—';
+    return `<tr>
+      <td><div class="td-name">${esc(c.name||'—')}</div></td>
+      <td><div class="td-email">${esc(c.email||'—')}</div></td>
+      <td><div class="td-token" title="Clique para ver token" onclick="viewToken('${c.id}')">${esc(shortToken)}</div></td>
+      <td>${badge}</td>
+      <td><div class="td-date">${expDate}</div></td>
+      <td>
+        <div class="actions">
+          <button class="act-btn renew" onclick="openRenew('${c.id}')">↻ Renovar</button>
+          <button class="act-btn copy"  onclick="viewToken('${c.id}')">🔑 Token</button>
+          ${c.active ? `<button class="act-btn revoke" onclick="openRevoke('${c.id}')">⛔ Revogar</button>` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ─── NEW CLIENT ─── */
+window.openNewModal = () => {
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-email').value = '';
+  document.getElementById('new-period').value = '90';
+  document.getElementById('new-custom-wrap').style.display = 'none';
+  document.getElementById('new-token-preview').textContent = '(gerado ao cadastrar)';
+  openModal('modal-new');
+};
+
+document.getElementById('new-period').addEventListener('change', function() {
+  document.getElementById('new-custom-wrap').style.display = this.value === 'custom' ? 'block' : 'none';
+});
+
+window.createClient = async () => {
+  const name   = document.getElementById('new-name').value.trim();
+  const email  = document.getElementById('new-email').value.trim().toLowerCase();
+  const period = document.getElementById('new-period').value;
+
+  if (!name || !email) { toast('Preencha nome e e-mail', 'error'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('E-mail inválido', 'error'); return; }
+
+  let expiresAt;
+  if (period === 'custom') {
+    const d = document.getElementById('new-custom-date').value;
+    if (!d) { toast('Informe a data', 'error'); return; }
+    expiresAt = new Date(d + 'T23:59:59');
+  } else {
+    expiresAt = new Date(Date.now() + parseInt(period) * 86400000);
+  }
+
+  const token = generateToken(email);
+  const docId = crypto.randomUUID();
+
+  try {
+    await setDoc(doc(db, 'licencas', docId), {
+      name, email, token, active: true,
+      expiresAt, period: parseInt(period) || null,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    document.getElementById('new-token-preview').textContent = token;
+    await copyToClipboard(token);
+    toast(`✅ Cliente cadastrado! Token copiado.`, 'success');
+    closeModal('modal-new');
+    await loadClients();
+  } catch(e) {
+    console.error(e); toast('Erro ao cadastrar', 'error');
+  }
+};
+
+/* ─── RENEW ─── */
+window.openRenew = (id) => {
+  window._renewTarget = window._clients.find(c => c.id === id);
+  window._renewPeriod = 60;
+  document.getElementById('renew-name').value = window._renewTarget?.name || '';
+  document.getElementById('renew-manual-wrap').style.display = 'none';
+  document.querySelectorAll('.period-btn').forEach((b,i) => {
+    b.classList.toggle('sel', i===1);
+  });
+  openModal('modal-renew');
+};
+
+window.selPeriod = (days, el) => {
+  window._renewPeriod = days;
+  window._renewCustom = null;
+  document.getElementById('renew-manual-wrap').style.display = 'none';
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+};
+
+window.toggleManualDate = () => {
+  const wrap = document.getElementById('renew-manual-wrap');
+  const show = wrap.style.display === 'none';
+  wrap.style.display = show ? 'block' : 'none';
+  if (show) {
+    window._renewPeriod = null;
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('sel'));
+    document.getElementById('period-manual-btn').classList.add('sel');
+  }
+};
+
+window.confirmRenew = async () => {
+  const c = window._renewTarget;
+  if (!c) return;
+  let expiresAt;
+  if (!window._renewPeriod) {
+    const d = document.getElementById('renew-custom-date').value;
+    if (!d) { toast('Informe a data', 'error'); return; }
+    expiresAt = new Date(d + 'T23:59:59');
+  } else {
+    expiresAt = new Date(Date.now() + window._renewPeriod * 86400000);
+  }
+  try {
+    await updateDoc(doc(db, 'licencas', c.id), {
+      active: true, expiresAt, updatedAt: serverTimestamp()
+    });
+    toast(`✅ Licença de ${c.name} renovada!`, 'success');
+    closeModal('modal-renew');
+    await loadClients();
+  } catch(e) { toast('Erro ao renovar', 'error'); }
+};
+
+/* ─── REVOKE ─── */
+window.openRevoke = (id) => {
+  window._revokeTarget = window._clients.find(c => c.id === id);
+  document.getElementById('revoke-name').textContent = window._revokeTarget?.name || '';
+  openModal('modal-revoke');
+};
+
+window.confirmRevoke = async () => {
+  const c = window._revokeTarget;
+  if (!c) return;
+  try {
+    await updateDoc(doc(db, 'licencas', c.id), { active: false, updatedAt: serverTimestamp() });
+    toast(`⛔ Acesso de ${c.name} revogado`, 'success');
+    closeModal('modal-revoke');
+    await loadClients();
+  } catch(e) { toast('Erro ao revogar', 'error'); }
+};
+
+/* ─── VIEW TOKEN ─── */
+window.viewToken = (id) => {
+  const c = window._clients.find(c => c.id === id);
+  if (!c) return;
+  window._viewTokenTarget = c;
+  document.getElementById('view-token-val').textContent = c.token || '—';
+  document.getElementById('view-token-email').textContent = c.email || '';
+  openModal('modal-token');
+};
+
+window.copyViewToken = async () => {
+  const c = window._viewTokenTarget;
+  if (!c?.token) return;
+  await copyToClipboard(c.token);
+  toast('📋 Token copiado!', 'success');
+};
+
+/* ─── MODAL HELPERS ─── */
+window.openModal = (id) => document.getElementById(id).classList.add('open');
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if(e.target === bg) bg.classList.remove('open'); });
+});
+
+/* ─── CLIPBOARD ─── */
+async function copyToClipboard(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const t=document.createElement('textarea'); t.value=text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+}
+
+/* ─── TOAST ─── */
+window.toast = (msg, type='info') => {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+};
+</script>
+</body>
+</html>
