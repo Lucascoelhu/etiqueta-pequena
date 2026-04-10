@@ -177,7 +177,7 @@ body{font-family:Arial,sans-serif;background:#e8e8e8;color:#222;font-size:14px;o
     outline:none!important;
     box-shadow:none!important;
   }
-  @page{margin:1cm;size:A4}
+  @page{size:A4}
 }
 
 /* ===========================
@@ -934,14 +934,14 @@ function $set(id, val){
 
 function updatePrintStyle() {
   const t=$v('mg-top')||.5, r=$v('mg-right')||.5, b=$v('mg-bottom')||.5, l=$v('mg-left')||.5;
-  document.getElementById('print-margins').textContent=`@media print{@page{margin:${t}cm ${r}cm ${b}cm ${l}cm}}`;
+  document.getElementById('print-margins').textContent=`@media print{@page{size:A4;margin:${t}cm ${r}cm ${b}cm ${l}cm}}`;
 }
 
 function defaultLayout(modelo) {
   const h = tagH(), w = tagW();
   modelo = modelo || 1;
   if (modelo === 2) return {
-    nome2:      {x:8,   y:8,    size:16, bold:true,  italic:false, color:'',        visible:true},
+    nome2:      {x:8,   y:8,    size:16, bold:false, italic:false, color:'',        visible:true},
     marca2:     {x:8,   y:28,   size:14, bold:false, italic:false, color:'#cc0000', visible:true},
     qtd1:       {x:8,   y:50,   size:14, bold:true,  italic:false, color:'',        visible:true},
     porLabel1:  {x:28,  y:50,   size:14, bold:false, italic:false, color:'',        visible:true},
@@ -956,7 +956,7 @@ function defaultLayout(modelo) {
     centavos2b: {x:106, y:90,   size:22, bold:true,  italic:false, color:'#cc0000', visible:true},
   };
   if (modelo === 3) return {
-    nome3:    {x:8,   y:8,      size:16, bold:true,  italic:false, color:'', visible:true},
+    nome3:    {x:8,   y:8,      size:16, bold:false, italic:false, color:'', visible:true},
     marca3:   {x:8,   y:28,     size:14, bold:false, italic:false, color:'', visible:true},
     rsOld:    {x:8,   y:54,     size:13, bold:false, italic:false, color:'#888', visible:true},
     precoOld: {x:28,  y:46,     size:28, bold:false, italic:false, color:'#888', visible:true},
@@ -968,7 +968,7 @@ function defaultLayout(modelo) {
   };
   // modelo 1 (default)
   return {
-    nome:     {x:15, y:12,      size:18, bold:true,  italic:false, color:'', visible:true},
+    nome:     {x:15, y:12,      size:18, bold:false, italic:false, color:'', visible:true},
     marca:    {x:15, y:43,      size:18, bold:false, italic:false, color:'', visible:true},
     rs:       {x:15, y:h-37,    size:14, bold:false, italic:false, color:'', visible:true},
     precoInt: {x:51, y:h-100,   size:75, bold:true,  italic:false, color:'', visible:true},
@@ -1937,7 +1937,7 @@ const DEFAULT_CONFIG = {
   ],
   "layouts": {
     "1":{
-      "nome3":    {"x":8,  "y":6,  "size":16,"bold":true, "italic":false,"color":"",       "visible":true},
+      "nome3":    {"x":8,  "y":6,  "size":16,"bold":false,"italic":false,"color":"",       "visible":true},
       "marca3":   {"x":8,  "y":24, "size":14,"bold":true, "italic":false,"color":"#cc0000","visible":true},
       "rsOld":    {"x":8,  "y":48, "size":13,"bold":false,"italic":false,"color":"#888",   "visible":true},
       "precoOld": {"x":40, "y":40, "size":26,"bold":false,"italic":false,"color":"#888",   "visible":true},
@@ -1948,7 +1948,7 @@ const DEFAULT_CONFIG = {
       "undNew":   {"x":168,"y":84, "size":14,"bold":false,"italic":false,"color":"",       "visible":true}
     },
     "2":{
-      "nome2":      {"x":8,  "y":4,  "size":16,"bold":true, "italic":false,"color":"",       "visible":true},
+      "nome2":      {"x":8,  "y":4,  "size":16,"bold":false,"italic":false,"color":"",       "visible":true},
       "marca2":     {"x":8,  "y":22, "size":14,"bold":true, "italic":false,"color":"#cc0000","visible":true},
       "qtd1":       {"x":24, "y":40, "size":30,"bold":true, "italic":false,"color":"#cc0000","visible":true},
       "porLabel1":  {"x":64, "y":44, "size":14,"bold":true, "italic":true, "color":"",       "visible":true},
@@ -1963,7 +1963,7 @@ const DEFAULT_CONFIG = {
       "centavos2b": {"x":176,"y":68, "size":30,"bold":true, "italic":false,"color":"#cc0000","visible":true}
     },
     "3":{
-      "nome":     {"x":8,  "y":8,  "size":18,"bold":true, "italic":false,"color":"",       "visible":true},
+      "nome":     {"x":8,  "y":8,  "size":18,"bold":false,"italic":false,"color":"",       "visible":true},
       "marca":    {"x":8,  "y":26, "size":16,"bold":true, "italic":false,"color":"#cc0000","visible":true},
       "rs":       {"x":8,  "y":64, "size":30,"bold":false,"italic":false,"color":"",       "visible":true},
       "precoInt": {"x":72, "y":36, "size":70,"bold":true, "italic":false,"color":"#cc0000","visible":true},
