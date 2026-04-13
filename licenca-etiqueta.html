@@ -585,6 +585,44 @@
   </div>
 </div>
 
+<!-- MODAL: EDITAR CLIENTE -->
+<div class="modal-bg" id="modal-edit">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Editar cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-edit')">×</button>
+    </div>
+    <div class="modal-field">
+      <label>Nome</label>
+      <input type="text" id="edit-name" placeholder="Nome do cliente">
+    </div>
+    <div class="modal-field">
+      <label>E-mail</label>
+      <input type="email" id="edit-email" placeholder="email@exemplo.com">
+    </div>
+    <div class="modal-field">
+      <label>Token de acesso</label>
+      <input type="text" id="edit-token" placeholder="XXXX-XXXX-XXXX-XXXX ou ETQ-..." 
+             style="font-family:var(--mono);font-size:13px;letter-spacing:.5px"
+             oninput="this.value=this.value.toUpperCase()">
+      <div style="margin-top:8px;padding:10px 12px;background:var(--accent-glow);border:1px solid rgba(59,130,246,.2);border-radius:var(--radius);font-size:11px;color:var(--text2);line-height:1.7">
+        💡 Você pode usar qualquer token — inclusive o mesmo token do <strong style="color:var(--accent)">Cartaz Mega</strong> para unificar o acesso do cliente.
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>Status</label>
+      <select id="edit-active">
+        <option value="true">✅ Ativo</option>
+        <option value="false">⛔ Inativo / Revogado</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('modal-edit')">Cancelar</button>
+      <button class="btn-modal-ok" onclick="confirmEdit()">💾 Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
@@ -723,6 +761,7 @@ window.renderTable = () => {
         <div class="actions">
           <button class="act-btn renew" onclick="openRenew('${c.id}')">↻ Renovar</button>
           <button class="act-btn copy"  onclick="viewToken('${c.id}')">🔑 Token</button>
+          <button class="act-btn edit"  onclick="openEdit('${c.id}')">✏️ Editar</button>
           ${c.active ? `<button class="act-btn revoke" onclick="openRevoke('${c.id}')">⛔ Revogar</button>` : ''}
         </div>
       </td>
@@ -868,6 +907,44 @@ window.copyViewToken = async () => {
   if (!c?.token) return;
   await copyToClipboard(c.token);
   toast('📋 Token copiado!', 'success');
+};
+
+/* ─── EDITAR CLIENTE ─── */
+window.openEdit = (id) => {
+  const c = window._clients.find(c => c.id === id);
+  if (!c) return;
+  window._editTarget = c;
+  document.getElementById('edit-name').value  = c.name  || '';
+  document.getElementById('edit-email').value = c.email || '';
+  document.getElementById('edit-token').value = c.token || '';
+  document.getElementById('edit-active').value = c.active ? 'true' : 'false';
+  openModal('modal-edit');
+};
+
+window.confirmEdit = async () => {
+  const c = window._editTarget;
+  if (!c) return;
+
+  const name   = document.getElementById('edit-name').value.trim();
+  const email  = document.getElementById('edit-email').value.trim().toLowerCase();
+  const token  = document.getElementById('edit-token').value.trim().toUpperCase();
+  const active = document.getElementById('edit-active').value === 'true';
+
+  if (!name || !email) { toast('Preencha nome e e-mail', 'error'); return; }
+  if (!token)          { toast('Informe o token', 'error'); return; }
+
+  try {
+    await updateDoc(doc(db, 'licencas', c.id), {
+      name, email, token, active,
+      updatedAt: serverTimestamp()
+    });
+    toast('✅ Cliente atualizado com sucesso!', 'success');
+    closeModal('modal-edit');
+    await loadClients();
+  } catch(e) {
+    console.error(e);
+    toast('Erro ao salvar alterações', 'error');
+  }
 };
 
 /* ─── MODAL HELPERS ─── */
